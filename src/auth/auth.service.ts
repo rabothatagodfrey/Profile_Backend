@@ -12,6 +12,7 @@ import * as bcrypt from 'bcrypt';
 import { InjectModel } from '@nestjs/mongoose';
 
 
+
 @Injectable()
 export class AuthService {
 
@@ -22,7 +23,7 @@ export class AuthService {
 		if (!user.email) throw new BadRequestException('Please provide an email');
 
     const hashedPassword = await bcrypt.hash(user.password, 10);
-		const token = await this.__jwt.signAsync({ id: user.id });
+    user = { ...user, password: hashedPassword }
 
     try{
 
@@ -31,13 +32,42 @@ export class AuthService {
       return { message: 'Successfully Registered ' }
 
     }catch (error){
+      if (error.code === 11000 && error.keyValue.email) throw new BadRequestException(`Email already taken, please sign in or sign up`);
+      
+      if (error.response.errors){
+
+				const err = error.response.errors;
+				if (err.name) throw new BadRequestException(err.name.message);
+				throw new BadRequestException(err);
+			}
+
+			throw new BadRequestException(error.message);
 
     }
+  }
 
+  async authenticateUserWithUsersInDatabase(credentials :any){
+    const user = await this.__userModel.findOne({ email: credentials.email });
+    if (!user) throw new BadRequestException('Invalid credentials!');
+		if (!await bcrypt.compare(credentials.password, user.password)) throw new BadRequestException('Invalid credentials!');
+
+    try {
+			const token = await this.__jwt.signAsync({ id: user.id });
+      return token;
+		} catch (error) {
+			
+		}
 
   }
 
-  authenticateUserWithUsersInDatabase(credentials :any){
-    return "login works";
+  // Change User Password From The Database
+	async changeUserPasswordFromTheDatabase(userId: string, passwords: any){
+    const user = await this.__userModel.findOne({ _id: userId });
+
+    if (!user) throw new BadRequestException('Not Allowed To Change password for someone else!');
+    if (!await bcrypt.compare(passwords.old_password, user.password)) throw new BadRequestException('Incorrect Password!');
+    if (await bcrypt.compare(passwords.new_password, user.password)) throw new BadRequestException('Sorry can\'t set the same password!');
+
+    return await this.__userModel.findByIdAndUpdate(userId, { password: await bcrypt.hash(passwords.new_password, 10) });
   }
 }

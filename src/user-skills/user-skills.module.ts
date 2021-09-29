@@ -3,7 +3,7 @@ import { UserSkillsService } from './user-skills.service';
 import { UserSkillsController } from './user-skills.controller';
 
 @Module({
-  providers: [UserSkillsService],
+  providers: [UserSkillsModule,],
   controllers: [UserSkillsController]
 })
 export class UserSkillsModule {}

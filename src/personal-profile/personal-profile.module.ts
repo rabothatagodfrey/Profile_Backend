@@ -3,7 +3,7 @@ import { PersonalProfileService } from './personal-profile.service';
 import { PersonalProfileController } from './personal-profile.controller';
 
 @Module({
-  providers: [PersonalProfileService],
+  providers: [PersonalProfileModule],
   controllers: [PersonalProfileController]
 })
 export class PersonalProfileModule {}

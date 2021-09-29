@@ -18,7 +18,7 @@ export const PersonalSchema = new mongoose.Schema({
 
 });
 
-export interface personal extends mongoose.Document{
+export interface Personal extends mongoose.Document{
 
     address:string;
     token:string;
